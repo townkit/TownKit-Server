@@ -1,0 +1,11 @@
+{
+  "name": "townie",
+  "version": "0.0.1",
+  "description": "Town api",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Alex Brown",
+  "license": "ISC"
+}
