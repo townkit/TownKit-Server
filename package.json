@@ -7,5 +7,12 @@
     "test": "npm test"
   },
   "author": "Alex Brown",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.1.2",
+    "express": "^4.13.4",
+    "fast-csv": "^2.3.0",
+    "location-slugger": "0.0.1",
+    "mongoose": "^4.6.5"
+  }
 }
