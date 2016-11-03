@@ -3,19 +3,12 @@ Once all packages have installed, cd into importers/united-kingdom
 
 run  
 
-node import.js
+> node server.js --import=true
 
-This will import the demo data set into your database.
-
+This will import the demo data set into your database, then run the server
 (This assumes mongodb is running on localhost)
 
-Then, cd to the src folder.
-
-node server.js
-
-App runs on localhost:8080
-
-For example:
+These URL's should now work:
 
 http://localhost:8080/United-Kingdom  
 http://localhost:8080/United-Kingdom/England
