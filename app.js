@@ -3,6 +3,10 @@ var express = require('express'),
 
 var router = express.Router();
 
-app.use('/United-Kingdom', require('./routes/united-kingdom'));
+app.get('/favicon.ico', function(req, res) {
+    res.status(200);
+});
+
+app.use('/', require('./routes/locations'));
 
 module.exports = app;

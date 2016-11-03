@@ -1,24 +1,13 @@
 var mongoose = require('mongoose'),
+	materializedPlugin = require('mongoose-materialized'),
 	Schema = mongoose.Schema
 
 var locationSchema = new Schema( {
-
 	name: String,
-	nameSlug: String,
-
-	county: String,
-	countySlug: String,
-
-	country: String,
-	countrySlug: String,
-
-	latitude: String,
-	longitude: String,
-
-	type: String,
+	slugs: Array
 });
 
-mongoose.Promise = global.Promise
-var Location = mongoose.model('location', locationSchema);
+locationSchema.plugin(materializedPlugin);
 
-module.exports = Location;
+mongoose.Promise = global.Promise
+module.exports = mongoose.model('location', locationSchema);

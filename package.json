@@ -9,10 +9,13 @@
   "author": "Alex Brown",
   "license": "ISC",
   "dependencies": {
+    "all": "0.0.0",
     "async": "^2.1.2",
     "express": "^4.13.4",
     "fast-csv": "^2.3.0",
     "location-slugger": "0.0.1",
-    "mongoose": "^4.6.5"
+    "lodash": "^4.16.6",
+    "mongoose": "^4.6.5",
+    "mongoose-materialized": "^0.1.8"
   }
 }
