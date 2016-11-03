@@ -5,11 +5,8 @@ var async = require('async'),
     locationSlugger = require('location-slugger');
 
 router.get('/*', function(req, res) {
-
     var params = req.params[0].replace(/\/$/, '');
     var slug = params.split('/').reverse().join('--');
-
-    console.log(req.query);
 
     var searchObject = (slug.indexOf('--') > 0) ? { 'slugs.1': slug } : { 'slugs.0': slug };
 
@@ -30,16 +27,11 @@ router.get('/*', function(req, res) {
         //this is where things start to get difficults
         var parentLocation = locationsForSlug[0];
 
-
         //here we need to identify how deep to do the recursive look up, then populate
         //the response json
-        
         generateChildLocationsForLocation(parentLocation, 500, function(location) {
-
             return res.json(location);
         });
-
-
     });
 });
 

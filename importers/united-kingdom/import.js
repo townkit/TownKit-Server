@@ -5,9 +5,9 @@ var _ = require('lodash'),
     Location = require(__dirname + '/../../models/location'),
     mongoose = require('mongoose');
 
-parseCsv(function(data) {
+module.exports.import = function(done){
 
-    mongoose.connect('mongodb://localhost/townie');
+parseCsv(function(data) {
 
     async.series([
 
@@ -118,7 +118,6 @@ parseCsv(function(data) {
 
                         async.each(countries, function(country, countryCb) {
 
-                            console.log('Getting Counties in   ', country.name)
 
                             var countyNamesInCountry = _.uniq(_.map(_.filter(data, {
                                 country: country.name
@@ -148,8 +147,6 @@ parseCsv(function(data) {
                                 country.appendChild(county);
                                 county.save(function() {
 
-                                    console.log('getting towns in ', countyNameInCountry)
-
                                     var townNamesInCounty = _.uniq(_.map(_.filter(data, {
                                         county: countyNameInCountry
                                     }), function(o) {
@@ -166,7 +163,7 @@ parseCsv(function(data) {
                                             ]
                                         });
 
-                                        console.log('saving towns  ', townNameInCounty)
+                                        console.log('Saving town  ', townNameInCounty)
 
                                         county.appendChild(town);
                                         town.save(townInCountyCb)
@@ -185,17 +182,18 @@ parseCsv(function(data) {
             if (err)
                 console.log('Error: ', err)
 
-            console.log('Done')
-            process.exit();
+            done();
         });
 });
+
+}
 
 function parseCsv(callback) {
 
     var locationRows = [];
 
     csv
-        .fromPath('data.csv', {
+        .fromPath(__dirname + '/data.csv', {
             headers: true
         })
         .on('data', function(data) {

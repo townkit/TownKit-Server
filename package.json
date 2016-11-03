@@ -16,6 +16,7 @@
     "location-slugger": "0.0.1",
     "lodash": "^4.16.6",
     "mongoose": "^4.6.5",
-    "mongoose-materialized": "^0.1.8"
+    "mongoose-materialized": "^0.1.8",
+    "optimist": "^0.6.1"
   }
 }

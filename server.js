@@ -1,8 +1,20 @@
-var app = require('./app.js');
-var mongoose   = require('mongoose');
-mongoose.connect('mongodb://localhost/townie');
+var app = require('./app.js'),
+	argv = require('optimist').argv,
+    mongoose = require('mongoose');
 
-var port = process.env.PORT || 8080;        // set our port
-app.listen(port);
+if (argv.import == 'true') {
+    require('./importers')(function() {
+        startApp();
+    })
+}
+else{
+    mongoose.connect('mongodb://localhost/townie');
+	startApp();
+}
 
-console.log('Running on port ' + port);
+function startApp() {
+    var port = process.env.PORT || 8080; // set our port
+    app.listen(port);
+
+    console.log('Running on port ' + port);
+}
