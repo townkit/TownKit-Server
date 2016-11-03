@@ -8,7 +8,10 @@ router.get('/*', function(req, res) {
     var params = req.params[0].replace(/\/$/, '');
     var slug = params.split('/').reverse().join('--');
 
-    var searchObject = (slug.indexOf('--') > 0) ? { 'slugs.1': slug } : { 'slugs.0': slug };
+    //case insensitive search
+    var searchObject = (slug.indexOf('--') > 0) 
+        ? { 'slugs.1': { $regex : new RegExp(slug, 'i') } } 
+        : { 'slugs.0': { $regex : new RegExp(slug, 'i') } };
 
     Location.find(searchObject, function(err, locationsForSlug) {
 
