@@ -4,7 +4,8 @@
   "description": "Town api",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": "npm test",
+    "start": "nodemon server.js --import=false"
   },
   "author": "Alex Brown",
   "license": "ISC",

@@ -8,9 +8,12 @@ router.get('/*', function(req, res) {
     var params = req.params[0].replace(/\/$/, '');
     var slug = params.split('/').reverse().join('--');
 
+    console.log(req.query);
+    slug = "^" + slug;
+
     //case insensitive search
-    var searchObject = (slug.indexOf('--') > 0) 
-        ? { 'slugs.1': { $regex : new RegExp(slug, 'i') } } 
+    var searchObject = (slug.indexOf('--') > 0)
+        ? { 'slugs.1': { $regex : new RegExp(slug, 'i') } }
         : { 'slugs.0': { $regex : new RegExp(slug, 'i') } };
 
     Location.find(searchObject, function(err, locationsForSlug) {
@@ -26,46 +29,99 @@ router.get('/*', function(req, res) {
         //this will denote how many recursive lookups for child locations we do
         //and how many from each level we select.
         var depthLimits = req.query.limit;
+        if(!depthLimits)
+        {
+            depthLimits=["*"];
+        }
 
         //this is where things start to get difficults
-        var parentLocation = locationsForSlug[0];
-
+        var parentLocation = locationsForSlug[0].toObject();
+        var locationObject = {
+            _id: parentLocation._id,
+            name: parentLocation.name,
+            slugs: parentLocation.slugs
+        };
+        //parentLocation.child_locations=[];
         //here we need to identify how deep to do the recursive look up, then populate
         //the response json
-        generateChildLocationsForLocation(parentLocation, 500, function(location) {
+        generateChildLocationsForLocation(locationObject, depthLimits,0, function(location) {
             return res.json(location);
         });
     });
 });
 
 //this is my rubbish attempt at doing the recursion - it's not working at all.
-//please do not use this! 
-function generateChildLocationsForLocation(location, limit, callback) {
+//please do not use this!
+//I have used this recursive methods for now.
+// Seems to be easy way at the moment
+function generateChildLocationsForLocation(location, depthLimits, curDepths, callback) {
 
-    depth = 1;
+    Location.find({ parentId: location._id }).sort({ name: 1 }).limit(depthLimits[curDepths]).exec(function(err, childLocations) {
+        delete location._id;
 
-    var locationObject = {
-        _id: location._id,
-        name: location.name,
-        child_locations: []
-    };
+        if(childLocations && childLocations.length>0)
+        {
 
-    Location.find({ parentId: location._id }).sort({ name: 1 }).limit(limit).exec(function(err, childLocations) {
 
-        locationObject.child_locations = childLocations.map(function(o) {
-            return {
-                _id: o._id,
-                name: o.name,
-                slugs: o.slugs
+            if(depthLimits.length > curDepths+1)
+            {
+                location.child_locations = childLocations.map(function(o) {
+                    return {
+                        _id: o._id,
+                        name: o.name,
+                        slugs: o.slugs
+                    }
+                });
+                location.child_locations.push("last");
+                async.eachSeries(location.child_locations, function(childLocation, callback1) {
+                    if(childLocation=="last")
+                    {
+                        location.child_locations.pop();
+
+                        if(curDepths==0)
+                        {
+                            return callback(location);
+                        }
+                        else
+                        {
+                            return callback(null,location);
+                        }
+                    }
+                    else
+                    {
+                        generateChildLocationsForLocation(childLocation, depthLimits,curDepths + 1, callback1)
+                    }
+                })
             }
-        });
+            else {
+                location.child_locations = childLocations.map(function(o) {
+                    return {
+                        name: o.name,
+                        slugs: o.slugs
+                    }
+                });
 
-        async.each(childLocations, function(childLocation, callback) {
-            generateChildLocationsForLocation(childLocation, 5, callback)
-        })
+                if(curDepths==0)
+                {
+                    return callback(location);
+                }
+                else
+                {
+                    return callback(null,location);
+                }
+            }
+        }
+        else {
+            if(curDepths==0)
+            {
+                return callback(location);
+            }
+            else
+            {
+                return callback(null,location);
+            }
+        }
 
-
-        return callback(locationObject);
     });
 }
 
