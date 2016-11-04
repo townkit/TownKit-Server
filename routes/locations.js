@@ -65,7 +65,14 @@ router.get('/*', function(req, res) {
 // Seems to be easy way at the moment
 function generateChildLocationsForLocation(location, depthLimits, curDepths, callback) {
 
-    Location.find({ parentId: location._id }).sort({ name: 1 }).limit(depthLimits[curDepths]).exec(function(err, childLocations) {
+    var limitCount=depthLimits[curDepths];
+    var sortLimit={sort: {name: 1}};
+    if(limitCount!="*")
+    {
+        sortLimit.limit=limitCount;
+    }
+
+    Location.find({ parentId: location._id },null,sortLimit).exec(function(err, childLocations) {
         delete location._id;
         if(err)
         {
