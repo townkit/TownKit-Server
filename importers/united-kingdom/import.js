@@ -5,186 +5,186 @@ var _ = require('lodash'),
     Location = require(__dirname + '/../../models/location'),
     mongoose = require('mongoose');
 
-module.exports.import = function(done){
+module.exports.import = function(done) {
 
-parseCsv(function(data) {
+    parseCsv(function(data) {
 
-    async.series([
+        async.series([
 
-            function(next) {
-                console.log('Clearing Locations...')
-                Location.remove({}, next)
-            },
+                function(next) {
+                    console.log('Clearing Locations...')
+                    Location.remove({}, next)
+                },
 
-            function(next) {
-                console.log('Creating United Kingdom')
+                function(next) {
+                    console.log('Creating United Kingdom')
 
-                var unitedKingdom = new Location({
-                    name: 'United Kingdom',
-                    slugs: [
-                        locationSlugger.slug('United Kingdom')
-                    ]
-                });
-
-                unitedKingdom.save(next);
-            },
-
-            function(next) {
-                console.log('Creating Countries')
-
-                var countries = generateCountryNames(data);
-
-                Location.findOne({ name: 'United Kingdom' }, function(err, unitedKingdom) {
-
-                    async.each(countries, function(country, callback) {
-                        unitedKingdom.appendChild(country);
-                        country.save(callback);
-                    }, next)
-                })
-
-            },
-
-            function(next) {
-                console.log('Creating London')
-
-                var london = new Location({
-                    name: 'London',
-                    slugs: [
-                        locationSlugger.slug('London'),
-                        locationSlugger.slug('London, England, United Kingdom')
-                    ]
-                });
-
-                london.save(function(err) {
-
-                    //get England from db so we can attach London as a child
-                    var england = Location.findOne({
-                        name: 'England'
-                    }, function(err, england) {
-
-                        england.appendChild(london);
-
-                        var londonBoroughNames = generateLondonBoroughNames(data);
-
-                        async.each(londonBoroughNames, function(londonBoroughName, londonBoroughCb) {
-
-                            var londonBorough = new Location({
-                                name: londonBoroughName,
-                                slugs: [
-                                    locationSlugger.slug(londonBoroughName),
-                                    locationSlugger.slug(londonBoroughName + ', London, England, United Kingdom'),
-                                ]
-                            });
-
-                            london.appendChild(londonBorough);
-
-                            londonBorough.save(function(err) {
-
-                                var townsInLondonBorough = _.uniq(_.map(_.filter(data, {
-                                    county: 'Greater London (' + londonBoroughName + ')'
-                                }), function(o) {
-                                    return o.name;
-                                }));
-
-                                async.each(townsInLondonBorough, function(townInLondonBoroughName, townInLondonBoroughCb) {
-
-                                    var townInLondonBorough = new Location({
-                                        name: townInLondonBoroughName,
-                                        slugs: [
-                                            locationSlugger.slug(townInLondonBoroughName),
-                                            locationSlugger.slug(townInLondonBoroughName + ', ' + londonBoroughName + ', London' + ', England, United Kingdom'),
-                                        ]
-                                    });
-
-                                    londonBorough.appendChild(townInLondonBorough)
-
-                                    townInLondonBorough.save(townInLondonBoroughCb)
-                                }, londonBoroughCb);
-
-
-                            });
-                        }, next)
-
+                    var unitedKingdom = new Location({
+                        name: 'United Kingdom',
+                        slugs: [
+                            locationSlugger.slug('United Kingdom')
+                        ]
                     });
-                });
-            },
 
-            function(next) {
-                console.log('Creating Counties')
+                    unitedKingdom.save(next);
+                },
 
-                Location.findOne({ name: 'United Kingdom' }, function(err, unitedKingdom) {
+                function(next) {
+                    console.log('Creating Countries')
 
-                    unitedKingdom.getChildren({ limit: 10 }, function(err, countries) { //todo: remove limit 10 when PR is accepted
+                    var countries = generateCountryNames(data);
 
-                        async.each(countries, function(country, countryCb) {
+                    Location.findOne({ name: 'United Kingdom' }, function(err, unitedKingdom) {
 
+                        async.each(countries, function(country, callback) {
+                            unitedKingdom.appendChild(country);
+                            country.save(callback);
+                        }, next)
+                    })
 
-                            var countyNamesInCountry = _.uniq(_.map(_.filter(data, {
-                                country: country.name
-                            }), function(o) {
-                                return o.county;
-                            }));
+                },
 
-                            //remove london - we created this 'county' separately
-                            if (country.name == 'England') {
-                                countyNamesInCountry = _.filter(countyNamesInCountry, function(c) {
-                                    return c.indexOf('Greater London') < 0;
-                                })
-                            }
+                function(next) {
+                    console.log('Creating London')
 
-                            async.each(countyNamesInCountry, function(countyNameInCountry, countyInCountryCb) {
+                    var london = new Location({
+                        name: 'London',
+                        slugs: [
+                            locationSlugger.slug('London'),
+                            locationSlugger.slug('London, England, United Kingdom')
+                        ]
+                    });
 
-                                console.log('Creating County  ', countyNameInCountry)
+                    london.save(function(err) {
 
-                                var county = new Location({
-                                    name: countyNameInCountry,
+                        //get England from db so we can attach London as a child
+                        var england = Location.findOne({
+                            name: 'England'
+                        }, function(err, england) {
+
+                            england.appendChild(london);
+
+                            var londonBoroughNames = generateLondonBoroughNames(data);
+
+                            async.each(londonBoroughNames, function(londonBoroughName, londonBoroughCb) {
+
+                                var londonBorough = new Location({
+                                    name: londonBoroughName,
                                     slugs: [
-                                        locationSlugger.slug(countyNameInCountry),
-                                        locationSlugger.slug(countyNameInCountry + ', ' + country.name + ', United Kingdom')
+                                        locationSlugger.slug(londonBoroughName),
+                                        locationSlugger.slug(londonBoroughName + ', London, England, United Kingdom'),
                                     ]
                                 });
 
-                                country.appendChild(county);
-                                county.save(function() {
+                                london.appendChild(londonBorough);
 
-                                    var townNamesInCounty = _.uniq(_.map(_.filter(data, {
-                                        county: countyNameInCountry
+                                londonBorough.save(function(err) {
+
+                                    var townsInLondonBorough = _.uniq(_.map(_.filter(data, {
+                                        county: 'Greater London (' + londonBoroughName + ')'
                                     }), function(o) {
                                         return o.name;
                                     }));
 
-                                    async.each(townNamesInCounty, function(townNameInCounty, townInCountyCb) {
+                                    async.each(townsInLondonBorough, function(townInLondonBoroughName, townInLondonBoroughCb) {
 
-                                        var town = new Location({
-                                            name: townNameInCounty,
+                                        var townInLondonBorough = new Location({
+                                            name: townInLondonBoroughName,
                                             slugs: [
-                                                locationSlugger.slug(townNameInCounty),
-                                                locationSlugger.slug(townNameInCounty + ', ' + countyNameInCountry + ', ' + country.name + ', United Kingdom')
+                                                locationSlugger.slug(townInLondonBoroughName),
+                                                locationSlugger.slug(townInLondonBoroughName + ', ' + londonBoroughName + ', London' + ', England, United Kingdom'),
                                             ]
                                         });
 
-                                        console.log('Saving town  ', townNameInCounty)
+                                        londonBorough.appendChild(townInLondonBorough)
 
-                                        county.appendChild(town);
-                                        town.save(townInCountyCb)
+                                        townInLondonBorough.save(townInLondonBoroughCb)
+                                    }, londonBoroughCb);
 
-                                    }, countyInCountryCb);
+
                                 });
-                            }, countryCb);
-                        }, next);
+                            }, next)
+
+                        });
                     });
-                });
-            }
-        ],
+                },
 
-        function(err, results) {
+                function(next) {
+                    console.log('Creating Counties')
 
-            if (err)
-                console.log('Error: ', err)
+                    Location.findOne({ name: 'United Kingdom' }, function(err, unitedKingdom) {
 
-            done();
-        });
-});
+                        unitedKingdom.getChildren({ limit: 10 }, function(err, countries) { //todo: remove limit 10 when PR is accepted
+
+                            async.eachLimit(countries, 1, function(country, countryCb) {
+
+                                var countyNamesInCountry = _.uniq(_.map(_.filter(data, {
+                                    country: country.name
+                                }), function(o) {
+                                    return o.county;
+                                }));
+
+                                //remove london - we created this 'county' separately
+                                if (country.name == 'England') {
+                                    countyNamesInCountry = _.filter(countyNamesInCountry, function(c) {
+                                        return c.indexOf('Greater London') < 0;
+                                    })
+                                }
+
+                                async.each(countyNamesInCountry, function(countyNameInCountry, countyInCountryCb) {
+
+                                    console.log('Creating County  ', countyNameInCountry)
+
+                                    var county = new Location({
+                                        name: countyNameInCountry,
+                                        slugs: [
+                                            locationSlugger.slug(countyNameInCountry),
+                                            locationSlugger.slug(countyNameInCountry + ', ' + country.name + ', United Kingdom')
+                                        ]
+                                    });
+
+                                    country.appendChild(county);
+                                    county.save(function() {
+
+                                        var townNamesInCounty = _.uniq(_.map(_.filter(data, {
+                                            county: countyNameInCountry
+                                        }), function(o) {
+                                            return o.name;
+                                        }));
+
+                                        console.log('Saving towns for ' + country.name + ' - '+countyNameInCountry)
+
+                                        async.each(townNamesInCounty, function(townNameInCounty, townInCountyCb) {
+
+                                            var town = new Location({
+                                                name: townNameInCounty,
+                                                slugs: [
+                                                    locationSlugger.slug(townNameInCounty),
+                                                    locationSlugger.slug(townNameInCounty + ', ' + countyNameInCountry + ', ' + country.name + ', United Kingdom')
+                                                ]
+                                            });
+
+
+                                            county.appendChild(town);
+                                            town.save(townInCountyCb)
+
+                                        }, countyInCountryCb);
+                                    });
+                                }, countryCb);
+                            }, next);
+                        });
+                    });
+                }
+            ],
+
+            function(err, results) {
+
+                if (err)
+                    console.log('Error: ', err)
+
+                done();
+            });
+    });
 
 }
 
