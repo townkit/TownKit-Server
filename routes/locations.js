@@ -82,10 +82,6 @@ router.get('/*', function(req, res) {
     });
 });
 
-//this is my rubbish attempt at doing the recursion - it's not working at all.
-//please do not use this!
-//I have used this recursive methods for now.
-// Seems to be easy way at the moment
 function generateChildLocationsForLocation(location, depthLimits, curDepths, callback) {
 
     var limitCount = depthLimits[curDepths];
@@ -102,6 +98,7 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
         if (childLocations && childLocations.length > 0) {
 
             if (depthLimits.length > curDepths + 1) {
+
                 location.child_locations = childLocations.map(function(o) {
                     return {
                         _id: o._id,
@@ -109,8 +106,11 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
                         slugs: o.slugs
                     }
                 });
+
                 location.child_locations.push("last");
+
                 async.eachSeries(location.child_locations, function(childLocation, callback1) {
+                    
                     if (childLocation == "last") {
                         location.child_locations.pop();
 
