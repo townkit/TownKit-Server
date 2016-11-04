@@ -12,3 +12,6 @@ These URL's should now work:
 
 http://localhost:8080/United-Kingdom  
 http://localhost:8080/United-Kingdom/England
+
+This should work
+http://localhost:8080/United-Kingdom/England?limit[0]=*&limit[1]=5&limit[2]=3
