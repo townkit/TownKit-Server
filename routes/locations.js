@@ -2,60 +2,83 @@ var async = require('async'),
     express = require('express'),
     router = express.Router(),
     Location = require('../models/location'),
+    CachedResponse = require('../models/cachedResponse'),
     locationSlugger = require('location-slugger');
 
 router.get('/*', function(req, res) {
     var params = req.params[0].replace(/\/$/, '');
     var slug = params.split('/').reverse().join('--');
 
-    console.log(req.query);
-    slug = "^" + slug;
+    //the depth limits for the query
+    //this will denote how many recursive lookups for child locations we do
+    //and how many from each level we select.
+    var depthLimits = req.query.limit;
+    if (!depthLimits) {
+        depthLimits = ["*"];
+    }
 
-    //case insensitive search
-    var searchObject = (slug.indexOf('--') > 0)
-        ? { 'slugs.1': { $regex : new RegExp(slug, 'i') } }
-        : { 'slugs.0': { $regex : new RegExp(slug, 'i') } };
+    var cacheKey = slug + depthLimits.toString();
 
-    Location.find(searchObject, function(err, locationsForSlug) {
+    async.waterfall([
+        function(callback) {
+            //check cache
+            CachedResponse.findOne({ cacheKey: cacheKey }, function(err, cachedResponse) {
+                if(cachedResponse){
+                    return callback(err, cachedResponse.location);;
+                }
+                else{
+                    return callback(err, null);;
+                }
+            });
+        },
+        function(location, callback) {
 
-        if (!locationsForSlug || locationsForSlug.length == 0) {
-            //alex todo: nicer error
-            return res.status(404)
-                .send('Location Not found');
+            if (location) {
+                console.log('Found in cache, so not getting again')
+                return callback(null, location)
+            }
+
+           console.log('Not found in cache, so getting and saving')
+
+            slug = "^" + slug;
+
+            //case insensitive search
+            var searchObject = (slug.indexOf('--') > 0) ? { 'slugs.1': { $regex: new RegExp(slug, 'i') } } : { 'slugs.0': { $regex: new RegExp(slug, 'i') } };
+
+            Location.find(searchObject, function(err, locationsForSlug) {
+
+                if (!locationsForSlug || locationsForSlug.length == 0) {
+                    //alex todo: nicer error
+                    return res.status(404)
+                        .send('Location Not found');
+                }
+
+                //alex todo: if more than one location for slug
+
+                var parentLocation = locationsForSlug[0].toObject();
+
+                var locationObject = {
+                    _id: parentLocation._id,
+                    name: parentLocation.name,
+                    slugs: parentLocation.slugs
+                };
+
+                generateChildLocationsForLocation(locationObject, depthLimits, 0, function(location) {
+
+                    console.log('Saving in cache')
+
+                    var c = new CachedResponse({ cacheKey: cacheKey, location: location });
+
+                    c.save(function() {
+                        return callback(null, location);
+                    })
+
+                });
+            })
         }
-        //alex todo: if more than one location for slug
 
-        //the depth limits for the query
-        //this will denote how many recursive lookups for child locations we do
-        //and how many from each level we select.
-        var depthLimits = req.query.limit;
-        if(!depthLimits)
-        {
-            depthLimits=["*"];
-        }
-        console.log(depthLimits);
-
-        //this is where things start to get difficults
-        var parentLocation = locationsForSlug[0].toObject();
-        var locationObject = {
-            _id: parentLocation._id,
-            name: parentLocation.name,
-            slugs: parentLocation.slugs
-        };
-        //parentLocation.child_locations=[];
-        //here we need to identify how deep to do the recursive look up, then populate
-        //the response json
-        generateChildLocationsForLocation(locationObject, depthLimits,0, function(location) {
-            return res.json(location);
-            //if(location.child_locations)
-            //{
-            //    return res.json(location.child_locations);
-            //}
-            //else
-            //{
-            //    return res.json([]);
-            //}
-        });
+    ], function(err, location) {
+        return res.json(location);
     });
 });
 
@@ -65,25 +88,20 @@ router.get('/*', function(req, res) {
 // Seems to be easy way at the moment
 function generateChildLocationsForLocation(location, depthLimits, curDepths, callback) {
 
-    var limitCount=depthLimits[curDepths];
-    var sortLimit={sort: {name: 1}};
-    if(limitCount!="*")
-    {
-        sortLimit.limit=parseInt(limitCount);
+    var limitCount = depthLimits[curDepths];
+    var sortLimit = { sort: { name: 1 } };
+    if (limitCount != "*") {
+        sortLimit.limit = parseInt(limitCount);
     }
 
-    Location.find({ parentId: location._id },null,sortLimit).exec(function(err, childLocations) {
+    Location.find({ parentId: location._id }, null, sortLimit).exec(function(err, childLocations) {
         delete location._id;
-        if(err)
-        {
+        if (err) {
             console.log(err);
         }
-        if(childLocations && childLocations.length>0)
-        {
-            console.log("Child Length:"+childLocations.length);
+        if (childLocations && childLocations.length > 0) {
 
-            if(depthLimits.length > curDepths+1)
-            {
+            if (depthLimits.length > curDepths + 1) {
                 location.child_locations = childLocations.map(function(o) {
                     return {
                         _id: o._id,
@@ -93,29 +111,19 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
                 });
                 location.child_locations.push("last");
                 async.eachSeries(location.child_locations, function(childLocation, callback1) {
-                    if(childLocation=="last")
-                    {
+                    if (childLocation == "last") {
                         location.child_locations.pop();
-                        console.log("Last one called.:");
 
-                        if(curDepths==0)
-                        {
+                        if (curDepths == 0) {
                             return callback(location);
+                        } else {
+                            return callback(null, location);
                         }
-                        else
-                        {
-                            return callback(null,location);
-                        }
-                    }
-                    else
-                    {
-                        console.log("Call Recursive.:");
-                        generateChildLocationsForLocation(childLocation, depthLimits,curDepths + 1, callback1)
+                    } else {
+                        generateChildLocationsForLocation(childLocation, depthLimits, curDepths + 1, callback1)
                     }
                 })
-            }
-            else {
-                console.log("Depth rechead.:");
+            } else {
                 location.child_locations = childLocations.map(function(o) {
                     return {
                         name: o.name,
@@ -123,25 +131,17 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
                     }
                 });
 
-                if(curDepths==0)
-                {
+                if (curDepths == 0) {
                     return callback(location);
-                }
-                else
-                {
-                    return callback(null,location);
+                } else {
+                    return callback(null, location);
                 }
             }
-        }
-        else {
-            console.log("Nothing found.:");
-            if(curDepths==0)
-            {
+        } else {
+            if (curDepths == 0) {
                 return callback(location);
-            }
-            else
-            {
-                return callback(null,location);
+            } else {
+                return callback(null, location);
             }
         }
 
