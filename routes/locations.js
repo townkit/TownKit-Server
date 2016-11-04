@@ -69,7 +69,7 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
     var sortLimit={sort: {name: 1}};
     if(limitCount!="*")
     {
-        sortLimit.limit=limitCount;
+        sortLimit.limit=parseInt(limitCount);
     }
 
     Location.find({ parentId: location._id },null,sortLimit).exec(function(err, childLocations) {
