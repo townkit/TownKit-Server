@@ -33,6 +33,7 @@ router.get('/*', function(req, res) {
         {
             depthLimits=["*"];
         }
+        console.log(depthLimits);
 
         //this is where things start to get difficults
         var parentLocation = locationsForSlug[0].toObject();
@@ -46,6 +47,14 @@ router.get('/*', function(req, res) {
         //the response json
         generateChildLocationsForLocation(locationObject, depthLimits,0, function(location) {
             return res.json(location);
+            //if(location.child_locations)
+            //{
+            //    return res.json(location.child_locations);
+            //}
+            //else
+            //{
+            //    return res.json([]);
+            //}
         });
     });
 });
@@ -58,10 +67,13 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
 
     Location.find({ parentId: location._id }).sort({ name: 1 }).limit(depthLimits[curDepths]).exec(function(err, childLocations) {
         delete location._id;
-
+        if(err)
+        {
+            console.log(err);
+        }
         if(childLocations && childLocations.length>0)
         {
-
+            console.log("Child Length:"+childLocations.length);
 
             if(depthLimits.length > curDepths+1)
             {
@@ -77,6 +89,7 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
                     if(childLocation=="last")
                     {
                         location.child_locations.pop();
+                        console.log("Last one called.:");
 
                         if(curDepths==0)
                         {
@@ -89,11 +102,13 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
                     }
                     else
                     {
+                        console.log("Call Recursive.:");
                         generateChildLocationsForLocation(childLocation, depthLimits,curDepths + 1, callback1)
                     }
                 })
             }
             else {
+                console.log("Depth rechead.:");
                 location.child_locations = childLocations.map(function(o) {
                     return {
                         name: o.name,
@@ -112,6 +127,7 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
             }
         }
         else {
+            console.log("Nothing found.:");
             if(curDepths==0)
             {
                 return callback(location);
