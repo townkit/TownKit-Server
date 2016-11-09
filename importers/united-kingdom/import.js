@@ -2,8 +2,7 @@ var _ = require('lodash'),
     async = require('async'),
     csv = require('fast-csv'),
     locationSlugger = require('location-slugger'),
-    Location = require(__dirname + '/../../models/location'),
-    mongoose = require('mongoose');
+    Location = require(__dirname + '/../../models/location');
 
 module.exports.import = function(done) {
 
@@ -163,7 +162,6 @@ module.exports.import = function(done) {
                                                     locationSlugger.slug(townNameInCounty + ', ' + countyNameInCountry + ', ' + country.name + ', United Kingdom')
                                                 ]
                                             });
-
 
                                             county.appendChild(town);
                                             town.save(townInCountyCb)

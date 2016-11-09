@@ -8,7 +8,6 @@ if (argv.import == 'true') {
     })
 }
 else{
-    mongoose.connect('mongodb://localhost/townie');
 	startApp();
 }
 

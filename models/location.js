@@ -1,6 +1,6 @@
-var mongoose = require('mongoose'),
+var db = require('../db.js'),
 	materializedPlugin = require('mongoose-materialized'),
-	Schema = mongoose.Schema
+	Schema = db.Schema
 
 var locationSchema = new Schema( {
 	name: String,
@@ -9,5 +9,5 @@ var locationSchema = new Schema( {
 
 locationSchema.plugin(materializedPlugin);
 
-mongoose.Promise = global.Promise
-module.exports = mongoose.model('location', locationSchema);
+db.Promise = global.Promise
+module.exports = db.model('location', locationSchema);
