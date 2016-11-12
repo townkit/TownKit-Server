@@ -18,6 +18,7 @@
     "lodash": "^4.16.6",
     "mongoose": "^4.6.5",
     "mongoose-materialized": "^0.1.8",
-    "optimist": "^0.6.1"
+    "optimist": "^0.6.1",
+    "single-line-log": "^1.1.2"
   }
 }

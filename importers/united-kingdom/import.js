@@ -1,11 +1,12 @@
 var _ = require('lodash'),
     async = require('async'),
     csv = require('fast-csv'),
+    log = require('single-line-log').stdout,
     locationSlugger = require('location-slugger'),
     Location = require(__dirname + '/../../models/location');
 
 module.exports.import = function(done) {
-
+    
     parseCsv(function(data) {
 
         async.series([
@@ -151,7 +152,10 @@ module.exports.import = function(done) {
                                             return o.name;
                                         }));
 
+                                        console.log('');
                                         console.log('Saving towns for ' + country.name + ' - '+countyNameInCountry)
+
+                                        var count = 0;
 
                                         async.each(townNamesInCounty, function(townNameInCounty, townInCountyCb) {
 
@@ -166,7 +170,11 @@ module.exports.import = function(done) {
                                             county.appendChild(town);
                                             town.save(townInCountyCb)
 
-                                        }, countyInCountryCb);
+                                            count++;
+
+                                            log('Count: '+count +' / '+townNamesInCounty.length);
+
+                                        }, countyInCountryCb());
                                     });
                                 }, countryCb);
                             }, next);
@@ -186,7 +194,7 @@ module.exports.import = function(done) {
 
 }
 
-function parseCsv(callback) {
+function parseCsv(callback) {    
 
     var locationRows = [];
 
