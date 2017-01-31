@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm test",
-    "start": "nodemon server.js --import=true"
+    "start": "MONGO_URL='mongodb://localhost/townie' nodemon server.js --import=true"
   },
   "author": "Alex Brown",
   "license": "ISC",
