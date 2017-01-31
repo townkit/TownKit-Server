@@ -6,15 +6,14 @@ var _ = require('lodash'),
     Location = require(__dirname + '/../../models/location');
 
 var unitedKingdom;
-var mapCountries=[];
+var mapCountries = [];
 var london;
-var mapLondonBoroughs=[];
+var mapLondonBoroughs = [];
 
-var mapCounties=[];
-var countTowns=0;
+var mapCounties = [];
+var countTowns = 0;
 
 module.exports.import = function(done) {
-
 
     parseCsv(function(data) {
 
@@ -44,7 +43,7 @@ module.exports.import = function(done) {
                     var countries = generateCountryNames(data);
                     async.each(countries, function(country, callback) {
                         unitedKingdom.appendChild(country);
-                        mapCountries[country.name]=country;
+                        mapCountries[country.name] = country;
                         country.save(callback);
                     }, next)
 
@@ -60,30 +59,26 @@ module.exports.import = function(done) {
                             locationSlugger.slug('London, England, United Kingdom')
                         ]
                     });
+
                     var england = mapCountries['England'];
                     england.appendChild(london);
 
                     london.save(function(err) {
-
-                        //get England from db so we can attach London as a child
                         console.log('Creating London Boroughs and Counties')
-
                         generateLondonBoroughAndCounty(data, next);
-
                     });
                 },
+
                 function(next) {
                     console.log('Creating Towns')
 
-                    var arrDataToSave=[];
+                    var arrDataToSave = [];
 
 
-                    for(var i=0; i<data.length;i++)
-                    {
+                    for (var i = 0; i < data.length; i++) {
                         var rowData = data[i];
                         countTowns++;
-                        if(rowData.county.indexOf('Greater London') >= 0)
-                        {//If it's london
+                        if (rowData.county.indexOf('Greater London') >= 0) { //If it's london
                             var londonBoroughs = rowData.county;
                             var londonBoroughName = londonBoroughs.match(/\(([^)]+)\)/)[1];
 
@@ -95,13 +90,11 @@ module.exports.import = function(done) {
                                     locationSlugger.slug(rowData.name),
                                     locationSlugger.slug(rowData.name + ', ' + londonBoroughName + ', London' + ', England, United Kingdom'),
                                 ],
-                                parentId:londonBorough._id,
-                                path: ","+londonBorough._id+londonBorough.path
+                                parentId: londonBorough._id,
+                                path: "," + londonBorough._id + londonBorough.path
                             };
                             arrDataToSave.push(townInLondonBorough);
-                        }
-                        else
-                        {
+                        } else {
                             var county = mapCounties[rowData.county];
 
                             var town = {
@@ -110,34 +103,33 @@ module.exports.import = function(done) {
                                     locationSlugger.slug(rowData.name),
                                     locationSlugger.slug(rowData.name + ', ' + rowData.county + ', ' + rowData.country + ', United Kingdom')
                                 ],
-                                parentId:county._id,
-                                path: ","+county._id+county.path
+                                parentId: county._id,
+                                path: "," + county._id + county.path
                             };
                             arrDataToSave.push(town);
                         }
                     }
-                    console.log("TO SAVE DATA READY: ", arrDataToSave.length);
-                    Location.collection.insertMany(arrDataToSave, function (err)
-                    {
-                        if(err)
-                        {
-                            console.log("DAMN: WHAT THE ERROR! SAVE ME");
+
+                    console.log("Ready to save data: ", arrDataToSave.length);
+
+                    Location.collection.insertMany(arrDataToSave, function(err) {
+                        if (err) {
+                            console.log("Error!");
                             console.log(err);
                         }
                         next();
-                    }
-                    );
+                    });
                 },
 
                 function(next) {
                     console.log("Data Rows: " + data.length);
                     console.log("Towns Processed: " + countTowns);
                     console.log("Setting Data free");
-                    unitedKingdom=null;
-                    mapCountries=[];
-                    london=null;
-                    mapLondonBoroughs=null;
-                    mapCounties=null;
+                    unitedKingdom = null;
+                    mapCountries = [];
+                    london = null;
+                    mapLondonBoroughs = null;
+                    mapCounties = null;
                     console.log('Completed!')
                     next();
                 }
@@ -204,14 +196,11 @@ function generateLondonBoroughAndCounty(data, next) {
 
     try {
 
-        for(var i=0; i<data.length;i++)
-        {
+        for (var i = 0; i < data.length; i++) {
             var rowData = data[i];
-            if(rowData.county.indexOf('Greater London')>=0)
-            {
+            if (rowData.county.indexOf('Greater London') >= 0) {
                 var londonBoroughName = rowData.county.match(/\(([^)]+)\)/)[1];
-                if(!mapLondonBoroughs[londonBoroughName])
-                {
+                if (!mapLondonBoroughs[londonBoroughName]) {
                     var londonBorough = new Location({
                         name: londonBoroughName,
                         slugs: [
@@ -219,23 +208,19 @@ function generateLondonBoroughAndCounty(data, next) {
                             locationSlugger.slug(londonBoroughName + ', London, England, United Kingdom'),
                         ]
                     });
-                    if(london)
-                    {
+
+                    if (london) {
                         london.appendChild(londonBorough);
+                    } else {
+                        console.log("London Does Not Exist!?");
                     }
-                    else
-                    {
-                        console.log("LONDON IS NOT EXIST");
-                    }
-                    mapLondonBoroughs[londonBorough.name]=londonBorough;
+                    
+                    mapLondonBoroughs[londonBorough.name] = londonBorough;
 
                     arrToSave.push(londonBorough);
                 }
-            }
-            else
-            {
-                if(!mapCounties[rowData.county])
-                {
+            } else {
+                if (!mapCounties[rowData.county]) {
                     var country = mapCountries[rowData.country];
                     var county = new Location({
                         name: rowData.county,
@@ -244,43 +229,34 @@ function generateLondonBoroughAndCounty(data, next) {
                             locationSlugger.slug(rowData.county + ', ' + country.name + ', United Kingdom')
                         ]
                     });
-                    if(country)
-                    {
+                    if (country) {
                         country.appendChild(county);
+                    } else {
+                        console.log("Country is not found");
                     }
-                    else {
-                        console.log("COUNTRY IS NOT FOUND");
-                    }
-                    mapCounties[rowData.county]=county;
+                    mapCounties[rowData.county] = county;
                     arrToSave.push(county);
                 }
-
             }
         }
-    }catch(err)
-    {
-        console.log("WILD ERROR");
+    } catch (err) {
+        console.log("Unknown Error:");
+        console.log(err);
     }
 
-    console.log("NO ERROR TILL HERE");
-
-    try
-    {
+    try {
         async.each(arrToSave, function(dataToSave, callback) {
 
             dataToSave.save(function(err, obj) {
-                if(err)
-                {
+                if (err) {
                     console.log("WHACK: ERROR HERE");
                     console.log(dataToSave);
                 }
                 callback();
             });
-            //dataToSave.save(callback);
 
         }, next)
-    }catch(err)
-    {
+    } catch (err) {
         console.log(err);
     }
 }
