@@ -1,26 +1,44 @@
 var async = require('async'),
-    express = require('express'),
-    router = express.Router(),
-    Location = require('../models/location'),
-    CachedResponse = require('../models/cachedResponse'),
-    locationSlugger = require('location-slugger');
+express = require('express'),
+router = express.Router(),
+Location = require('../models/location'),
+CachedResponse = require('../models/cachedResponse'),
+locationSlugger = require('location-slugger');
 
 router.get('/*', function(req, res) {
+
     var params = req.params[0].replace(/\/$/, '');
     var slug = params.split('/').reverse().join('--');
 
     //the depth limits for the query
     //this will denote how many recursive lookups for child locations we do
     //and how many from each level we select.
-    var depthLimits = req.query.limit;
-    if (!depthLimits) {
-        depthLimits = ["*"];
+
+    if(req.query.q){
+
+        var searchObject = (
+            slug.indexOf('--') > 0) 
+                ? { 'slugs.1': { $regex: new RegExp(slug, 'i') }, 'slugs': {'$in': [new RegExp(req.query.q, 'i')]}} 
+                : { 'slugs.0': { $regex: new RegExp(slug, 'i') }, 'slugs': {'$in': [new RegExp(req.query.q, 'i')]}};
+
+        console.log(searchObject)
+
+        Location.find(searchObject, function(err, locationsForQuery) {
+            return res.json(locationsForQuery)
+            res.end;
+        });
     }
 
-    var cacheKey = slug + depthLimits.toString();
+    else {
+        var depthLimits = req.query.limit;
+        if (!depthLimits) {
+            depthLimits = ["*"];
+        }
 
-    async.waterfall([
-        function(callback) {
+        var cacheKey = slug + depthLimits.toString();
+
+        async.waterfall([
+            function(callback) {
             //check cache
             CachedResponse.findOne({ cacheKey: cacheKey }, function(err, cachedResponse) {
                 if(cachedResponse){
@@ -34,11 +52,11 @@ router.get('/*', function(req, res) {
         function(location, callback) {
 
             if (location) {
-                console.log('Found in cache, so not getting again')
+                //console.log('Found in cache, so not getting again')
                 return callback(null, location)
             }
 
-           console.log('Not found in cache, so getting and saving')
+            //console.log('Not found in cache, so getting and saving')
 
             slug = "^" + slug;
 
@@ -50,7 +68,7 @@ router.get('/*', function(req, res) {
                 if (!locationsForSlug || locationsForSlug.length == 0) {
                     //alex todo: nicer error
                     return res.status(404)
-                        .send('Location Not found');
+                    .send('Location Not found');
                 }
 
                 //alex todo: if more than one location for slug
@@ -77,9 +95,11 @@ router.get('/*', function(req, res) {
             })
         }
 
-    ], function(err, location) {
-        return res.json(location);
-    });
+        ], function(err, location) {
+            return res.json(location);
+        });
+    }
+
 });
 
 function generateChildLocationsForLocation(location, depthLimits, curDepths, callback) {
@@ -110,7 +130,7 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
                 location.child_locations.push("last");
 
                 async.eachSeries(location.child_locations, function(childLocation, callback1) {
-                    
+
                     if (childLocation == "last") {
                         location.child_locations.pop();
 

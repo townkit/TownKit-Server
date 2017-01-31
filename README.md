@@ -15,3 +15,8 @@ http://localhost:8080/United-Kingdom/England
 
 This should work
 http://localhost:8080/United-Kingdom/England?limit[0]=*&limit[1]=5&limit[2]=3
+
+Can also do 'queries'
+like this
+
+localhost:8080/united-kingdom/england/?q=farnborough
