@@ -26,11 +26,6 @@ module.exports.import = function(done) {
                 },
 
                 function(next) {
-                    console.log('Clearing Cached Responses...')
-                    CachedResponse.remove({}, next)
-                },
-
-                function(next) {
                     console.log('Creating United Kingdom')
 
                     unitedKingdom = new Location({
@@ -138,6 +133,11 @@ module.exports.import = function(done) {
                     mapCounties = null;
                     console.log('Completed!')
                     next();
+                },
+
+                function(next) {
+                    console.log('Clearing Cached Responses...')
+                    CachedResponse.remove({}, next)
                 }
             ],
 
@@ -221,7 +221,7 @@ function generateLondonBoroughAndCounty(data, next) {
                     } else {
                         console.log("London Does Not Exist!?");
                     }
-                    
+
                     mapLondonBoroughs[londonBorough.name] = londonBorough;
 
                     arrToSave.push(londonBorough);
@@ -241,7 +241,9 @@ function generateLondonBoroughAndCounty(data, next) {
                     } else {
                         console.log("Country is not found");
                     }
+
                     mapCounties[rowData.county] = county;
+                    
                     arrToSave.push(county);
                 }
             }
@@ -256,8 +258,7 @@ function generateLondonBoroughAndCounty(data, next) {
 
             dataToSave.save(function(err, obj) {
                 if (err) {
-                    console.log("WHACK: ERROR HERE");
-                    console.log(dataToSave);
+                    console.log("Error!!" ,err);
                 }
                 callback();
             });
