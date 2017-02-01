@@ -78,7 +78,7 @@ module.exports.import = function(done) {
                         var rowData = data[i];
                         countTowns++;
 
-                        if (rowData.county.indexOf('Greater London') >= 0) { //If it's london
+                        if (rowData.nuts_region == 'London') { //If it's london
                             var londonBoroughs = rowData.county;
 
                             var londonBoroughName = rowData.local_government_area;
@@ -125,7 +125,6 @@ module.exports.import = function(done) {
                 function(next) {
                     console.log("Data Rows: " + data.length);
                     console.log("Towns Processed: " + countTowns);
-                    console.log("Setting Data free");
                     unitedKingdom = null;
                     mapCountries = [];
                     london = null;
@@ -163,6 +162,7 @@ function parseCsv(callback) {
                 latitude: data.latitude,
                 longitude: data.longitude,
                 local_government_area: data.local_government_area,
+                nuts_region: data.nuts_region,
                 type: data.type,
             };
 
@@ -199,7 +199,7 @@ function generateLondonBoroughAndCounty(data, next) {
 
         for (var i = 0; i < data.length; i++) {
             var rowData = data[i];
-            if (rowData.county.indexOf('Greater London') >= 0) {
+            if (rowData.nuts_region == 'London') {
                 var londonBoroughName = rowData.local_government_area;
                 if (!mapLondonBoroughs[londonBoroughName]) {
                     var londonBorough = new Location({
