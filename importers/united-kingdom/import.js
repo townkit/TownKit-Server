@@ -3,7 +3,8 @@ var _ = require('lodash'),
     csv = require('fast-csv'),
     log = require('single-line-log').stdout,
     locationSlugger = require('location-slugger'),
-    Location = require(__dirname + '/../../models/location');
+    Location = require(__dirname + '/../../models/location'),
+    CachedResponse = require(__dirname + '/../../models/cachedResponse');
 
 var unitedKingdom;
 var mapCountries = [];
@@ -22,6 +23,11 @@ module.exports.import = function(done) {
                 function(next) {
                     console.log('Clearing Locations...')
                     Location.remove({}, next)
+                },
+
+                function(next) {
+                    console.log('Clearing Cached Responses...')
+                    CachedResponse.remove({}, next)
                 },
 
                 function(next) {
