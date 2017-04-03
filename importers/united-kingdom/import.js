@@ -21,8 +21,19 @@ module.exports.import = function(done) {
         async.series([
 
                 function(next) {
-                    console.log('Clearing Locations...')
-                    Location.remove({}, next)
+                    console.log('Clearing United Kingdom...')
+
+                    Location.findOne({name: 'United Kingdom'}, function(err, unitedKingdom){
+                        if(unitedKingdom){
+                            Location.remove({$or:[{path: {$regex : unitedKingdom._id}}, {_id: unitedKingdom._id}]}, function(err){
+                                console.log('United Kingdom cleared')
+                                next();
+                            })
+                        }
+                        else{
+                            next();
+                        }
+                    })
                 },
 
                 function(next) {
@@ -42,12 +53,12 @@ module.exports.import = function(done) {
                     console.log('Creating Countries')
 
                     var countries = generateCountryNames(data);
+
                     async.each(countries, function(country, callback) {
                         unitedKingdom.appendChild(country);
                         mapCountries[country.name] = country;
                         country.save(callback);
                     }, next)
-
                 },
 
                 function(next) {
