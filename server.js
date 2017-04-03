@@ -1,6 +1,5 @@
 var app = require('./app.js'),
-	argv = require('optimist').argv,
-    mongoose = require('mongoose');
+	argv = require('optimist').argv;
 
 if (argv.import == 'true') {
     require('./importers')(function() {
