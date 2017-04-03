@@ -1,9 +1,14 @@
-var mongoose=require('mongoose');
+var config = require('config'),
+	mongoose=require('mongoose');
 
-mongoose.connect(process.env.MONGO_URL);
+mongoose.connect(config.mongoUrl);
 
 mongoose.connection.on('connected', function () {  
   console.log('Mongoose connected');
+}); 
+
+mongoose.connection.on('error', function (err) {  
+  console.log('Mongoose connection error: ', err);
 }); 
 
 module.exports = mongoose
