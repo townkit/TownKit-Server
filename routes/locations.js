@@ -51,17 +51,19 @@ router.get('/*', function(req, res) {
         },
         function(location, callback) {
 
+            //Found in cache, so not getting again
             if (location) {
-                //console.log('Found in cache, so not getting again')
                 return callback(null, location)
             }
 
-            //console.log('Not found in cache, so getting and saving')
+            //Not found in cache, so getting from db
 
             slug = "^" + slug;
 
             //case insensitive search
-            var searchObject = (slug.indexOf('--') > 0) ? { 'slugs.1': { $regex: new RegExp(slug, 'i') } } : { 'slugs.0': { $regex: new RegExp(slug, 'i') } };
+            var searchObject = (slug.indexOf('--') > 0) 
+                ? { 'slugs.1': { $regex: new RegExp(slug, 'i') } } 
+                : { 'slugs.0': { $regex: new RegExp(slug, 'i') } };
 
             Location.find(searchObject, function(err, locationsForSlug) {
 
@@ -71,7 +73,7 @@ router.get('/*', function(req, res) {
                     .send('Location Not found');
                 }
 
-                //alex todo: if more than one location for slug
+                //alex todo: if more than one location for slug?
 
                 var parentLocation = locationsForSlug[0].toObject();
 
@@ -90,7 +92,6 @@ router.get('/*', function(req, res) {
                     c.save(function() {
                         return callback(null, location);
                     })
-
                 });
             })
         }
@@ -99,7 +100,6 @@ router.get('/*', function(req, res) {
             return res.json(location);
         });
     }
-
 });
 
 function generateChildLocationsForLocation(location, depthLimits, curDepths, callback) {
@@ -164,7 +164,6 @@ function generateChildLocationsForLocation(location, depthLimits, curDepths, cal
                 return callback(null, location);
             }
         }
-
     });
 }
 

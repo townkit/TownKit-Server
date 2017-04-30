@@ -14,9 +14,9 @@ var mapLondonBoroughs = [];
 var mapCounties = [];
 var countTowns = 0;
 
-module.exports.import = function(done) {
+module.exports.import = function(fileName, done) {
 
-    parseCsv(function(data) {
+    parseCsv(fileName, function(data) {
 
         async.series([
 
@@ -153,22 +153,19 @@ module.exports.import = function(done) {
             ],
 
             function(err, results) {
-
                 if (err)
                     console.log('Error: ', err)
-
                 done();
             });
     });
-
 }
 
-function parseCsv(callback) {
+function parseCsv(fileName, callback) {
 
     var locationRows = [];
 
     csv
-        .fromPath(__dirname + '/data.csv', {
+        .fromPath(fileName, {
             headers: true
         })
         .on('data', function(data) {
