@@ -152,10 +152,8 @@ module.exports.import = function(fileName, done) {
                 }
             ],
 
-            function(err, results) {
-                if (err)
-                    console.log('Error: ', err)
-                done();
+            function(err) {
+                done(err);
             });
     });
 }

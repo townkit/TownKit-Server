@@ -1,3 +1,4 @@
 {
-    "mongoUrl": "MONGO_URL"
+    "mongoUrl": "MONGO_URL",
+    "importApiKey": "IMPORT_API_KEY"
 }

@@ -1,3 +1,4 @@
 {
-    "mongoUrl": "mongodb://localhost:27017/townkit"
+    "mongoUrl": "mongodb://localhost:27017/townkit",
+    "importApiKey": ""
 }
