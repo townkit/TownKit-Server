@@ -11,11 +11,8 @@ importers['united-kingdom'] = require('../importers/united-kingdom/import.js');
 
 router.post('/', upload.single('sourceFile'), function(req, res, next){
 
-	var expectedImportApiKey = config.importApiKey;
-	var providedImportApiKey = req.get('X-Import-Api-Key');
-
-	if(expectedImportApiKey){
-		if(providedImportApiKey != expectedImportApiKey){
+	if(config.importApiKey){
+		if(req.body.apiKey != config.importApiKey){
 			return res.status(401).send("Import API key incorrect")
 		}
 	}
@@ -30,14 +27,41 @@ router.post('/', upload.single('sourceFile'), function(req, res, next){
 		return res.status(400).send('Importer not found with id ' + req.body.id);
 	}
 
+	var headless = ((!req.body.headless) || (req.body.headless=='true'));
+
 	importer.import(req.file.path, function(err, countTowns){
 
+		//error
 		if(err){
-			return res.status(500).send('Error importing: ' + err)
+			if(headless){
+				return res.status(500).send('Error importing: ' + err)
+			}
+			else{
+				return res.render('import-error', {error: err});
+			}
 		}
-		
-		return res.send('Done. Saved '+countTowns +' items.');
-	})
+
+		//success
+		if(headless){
+			return res.send('Done. Saved ' + countTowns +' items.');
+		}
+		else{
+			return res.render('import-success', {numberOfItems: countTowns});
+		}
+	});
+});
+
+router.get('/', function(req, res){
+
+	var model = {
+		expectsApiKey: false
+	};
+
+	if(config.importApiKey){
+		model.expectsApiKey = true;
+	}
+
+	return res.render('import', model);
 });
 
 module.exports = router;

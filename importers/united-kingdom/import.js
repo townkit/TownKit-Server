@@ -38,101 +38,112 @@ module.exports.import = function(fileName, done) {
                 },
 
                 function(next) {
-                    console.log('Creating United Kingdom')
+                    callbackErrorHandler(function() {
+                        console.log('Creating United Kingdom')
 
-                    self.unitedKingdom = new Location({
-                        name: 'United Kingdom',
-                        slugs: [
-                            locationSlugger.slug('United Kingdom')
-                        ]
-                    });
+                        self.unitedKingdom = new Location({
+                            name: 'United Kingdom',
+                            slugs: [
+                                locationSlugger.slug('United Kingdom')
+                            ]
+                        });
 
-                    self.unitedKingdom.save(next);
+                        self.unitedKingdom.save(next);
+                    }, next);
                 },
 
                 function(next) {
-                    console.log('Creating Countries')
+                    callbackErrorHandler(function() {
+                    
+                        console.log('Creating Countries')
 
-                    var countries = generateCountryNames(data);
+                        var countries = generateCountryNames(data);
 
-                    async.each(countries, function(country, callback) {
-                        self.unitedKingdom.appendChild(country);
-                        self.mapCountries[country.name] = country;
-                        country.save(callback);
-                    }, next)
+                        async.each(countries, function(country, callback) {
+                            self.unitedKingdom.appendChild(country);
+                            self.mapCountries[country.name] = country;
+                            country.save(callback);
+                        }, next);
+
+                    }, next);
                 },
 
                 function(next) {
-                    console.log('Creating London')
+                    callbackErrorHandler(function() {
+                    
+                        console.log('Creating London')
 
-                    var london = new Location({
-                        name: 'London',
-                        slugs: [
-                            locationSlugger.slug('London'),
-                            locationSlugger.slug('London, England, United Kingdom')
-                        ]
-                    });
+                        var london = new Location({
+                            name: 'London',
+                            slugs: [
+                                locationSlugger.slug('London'),
+                                locationSlugger.slug('London, England, United Kingdom')
+                            ]
+                        });
 
-                    var england = self.mapCountries['England'];
-                    england.appendChild(london);
+                        var england = self.mapCountries['England'];
+                        england.appendChild(london);
 
-                    london.save(function(err) {
-                        console.log('Creating London Boroughs and Counties')
-                        generateLondonBoroughs(data, london, next);
-                    });
+                        london.save(function(err) {
+                            console.log('Creating London Boroughs and Counties')
+                            generateLondonBoroughs(data, london, next);
+                        });
+                    }, next);
                 },
 
                 function(next) {
-                    console.log('Creating Towns')
+                    callbackErrorHandler(function() {
+                        
+                        console.log('Creating Towns')
+                        var arrDataToSave = [];
 
-                    var arrDataToSave = [];
+                        for (var i = 0; i < data.length; i++) {
+                            var rowData = data[i];
+                            self.countTowns++;
 
-                    for (var i = 0; i < data.length; i++) {
-                        var rowData = data[i];
-                        self.countTowns++;
+                            if (rowData.nuts_region == 'London') { //If it's london
+                                var londonBoroughs = rowData.county;
 
-                        if (rowData.nuts_region == 'London') { //If it's london
-                            var londonBoroughs = rowData.county;
+                                var londonBoroughName = rowData.local_government_area;
 
-                            var londonBoroughName = rowData.local_government_area;
+                                var londonBorough = self.mapLondonBoroughs[londonBoroughName];
 
-                            var londonBorough = self.mapLondonBoroughs[londonBoroughName];
+                                var townInLondonBorough = {
+                                    name: rowData.name,
+                                    slugs: [
+                                        locationSlugger.slug(rowData.name),
+                                        locationSlugger.slug(rowData.name + ', ' + londonBoroughName + ', London' + ', England, United Kingdom'),
+                                    ],
+                                    parentId: londonBorough._id,
+                                    path: "," + londonBorough._id + londonBorough.path
+                                };
+                                arrDataToSave.push(townInLondonBorough);
+                            } else {
+                                var county = self.mapCounties[rowData.county];
 
-                            var townInLondonBorough = {
-                                name: rowData.name,
-                                slugs: [
-                                    locationSlugger.slug(rowData.name),
-                                    locationSlugger.slug(rowData.name + ', ' + londonBoroughName + ', London' + ', England, United Kingdom'),
-                                ],
-                                parentId: londonBorough._id,
-                                path: "," + londonBorough._id + londonBorough.path
-                            };
-                            arrDataToSave.push(townInLondonBorough);
-                        } else {
-                            var county = self.mapCounties[rowData.county];
-
-                            var town = {
-                                name: rowData.name,
-                                slugs: [
-                                    locationSlugger.slug(rowData.name),
-                                    locationSlugger.slug(rowData.name + ', ' + rowData.county + ', ' + rowData.country + ', United Kingdom')
-                                ],
-                                parentId: county._id,
-                                path: "," + county._id + county.path
-                            };
-                            arrDataToSave.push(town);
+                                var town = {
+                                    name: rowData.name,
+                                    slugs: [
+                                        locationSlugger.slug(rowData.name),
+                                        locationSlugger.slug(rowData.name + ', ' + rowData.county + ', ' + rowData.country + ', United Kingdom')
+                                    ],
+                                    parentId: county._id,
+                                    path: "," + county._id + county.path
+                                };
+                                arrDataToSave.push(town);
+                            }
                         }
-                    }
 
-                    console.log("Ready to save data: ", arrDataToSave.length);
+                        console.log("Ready to save data: ", arrDataToSave.length);
 
-                    Location.collection.insertMany(arrDataToSave, function(err) {
-                        if (err) {
-                            console.log("Error!");
-                            console.log(err);
-                        }
-                        next();
-                    });
+                        Location.collection.insertMany(arrDataToSave, function(err) {
+                            if (err) {
+                                console.log("Error:");
+                                console.log(err);
+                            }
+                            next(err);
+                        });
+                    }, next);
                 },
 
                 function(next) {
@@ -151,19 +162,30 @@ module.exports.import = function(fileName, done) {
                 },
 
                 function(next) {
-                    console.log('Deleting source file...')
-                    fs.unlink(fileName, next);
+                    callbackErrorHandler(function() {
+                        console.log('Deleting source file...')
+                        fs.unlink(fileName, next);
+                    }, next);
                 }
             ],
 
             function(err) {
-                
                 if(!err)
                     console.log('Done')
                 
                 done(err, self.countTowns);
             });
     });
+
+function callbackErrorHandler(fn, callback) {
+  try {
+    fn()
+  } catch (err) {
+    callback(err);
+  }
+}
+
+
 
     function parseCsv(fileName, callback) {
 

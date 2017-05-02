@@ -1,0 +1,30 @@
+html
+  head
+    title Import
+    style(type='text/css').
+      input, form {
+        display: block;
+        width: auto;
+      }
+      .form-group {
+        padding-bottom: 10px;
+      }
+  body
+    h1 Import Locations
+    h2 United Kingdom
+
+form(method='POST' action='/import' enctype='multipart/form-data')
+
+  input(type='hidden', name='id', value="united-kingdom")
+  input(type='hidden', name='headless', value="false")
+  
+  div.form-group
+    label(for='sourceFile') Source Data CSV:
+    input(type='file', placeholder='' name='sourceFile')
+  
+  if expectsApiKey
+    div.form-group
+      label(for='apiKey') API Key:
+      input(type='text', placeholder='Enter API Key' name='apiKey')
+
+  button(type='submit') Import
