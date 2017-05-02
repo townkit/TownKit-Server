@@ -2,10 +2,10 @@ var async = require('async'),
 	config = require('config'),
 	express = require('express'),
 	multer  = require('multer'),
-	upload = multer({dest: '../import-uploads'}),
+	upload = multer({dest: 'import-uploads'}), //todo: could configure this / use in memory storage
 	router = express.Router();
 
-//later, will iterate directory to find importers
+//todo: iterate directory to find importers
 var importers = [];
 importers['united-kingdom'] = require('../importers/united-kingdom/import.js');
 
@@ -30,13 +30,13 @@ router.post('/', upload.single('sourceFile'), function(req, res, next){
 		return res.status(400).send('Importer not found with id ' + req.body.id);
 	}
 
-	importer.import(req.file.path, function(err){
+	importer.import(req.file.path, function(err, countTowns){
 
 		if(err){
-			return res.status(500).send('Error importing - ', err);
+			return res.status(500).send('Error importing: ' + err)
 		}
 		
-		return res.send('Done');
+		return res.send('Done. Saved '+countTowns +' items.');
 	})
 });
 
