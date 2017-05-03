@@ -1,1 +1,1 @@
-web: node server.js --import=true
+web: node server.js

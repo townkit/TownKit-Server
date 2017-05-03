@@ -1,18 +1,19 @@
-var app = require('./app.js'),
-	argv = require('optimist').argv;
+var express = require('express'),
+    multer  = require('multer'),
+    upload = multer(),
+	app = express();
 
-if (argv.import == 'true') {
-    require('./importers')(function() {
-        startApp();
-    })
-}
-else{
-	startApp();
-}
+var router = express.Router();
 
-function startApp() {
-    var port = process.env.PORT || 8080; // set our port
-    app.listen(port);
+app.get('/favicon.ico', function(req, res) {
+    res.status(200);
+});
 
-    console.log('Running on port ' + port);
-}
+app.set('view engine', 'pug')
+app.use('/import', require('./routes/import'));
+app.use('/', require('./routes/locations'));
+
+var port = process.env.PORT || 8080;
+app.listen(port);
+
+console.log('Running on port ' + port);
