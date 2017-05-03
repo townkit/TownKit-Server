@@ -4,11 +4,13 @@ var config = require('config'),
 mongoose.connect(config.mongoUrl);
 
 mongoose.connection.on('connected', function () {  
-  console.log('Mongoose connected');
+  console.log('Connected to MongoDB');
 }); 
 
 mongoose.connection.on('error', function (err) {  
-  console.log('Mongoose connection error: ', err);
+  console.log('Error connecting to MongoDB');
+  console.log(err);
+  process.exit();
 }); 
 
 module.exports = mongoose
