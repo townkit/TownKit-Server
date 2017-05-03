@@ -10,6 +10,8 @@ app.get('/favicon.ico', function(req, res) {
 });
 
 app.set('view engine', 'pug')
+
+//routes
 app.use('/import', require('./routes/import'));
 app.use('/', require('./routes/locations'));
 
