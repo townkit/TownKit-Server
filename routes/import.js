@@ -27,6 +27,7 @@ router.post('/', upload.single('sourceFile'), function(req, res, next){
 		return res.status(400).send('Importer not found with id ' + req.body.id);
 	}
 
+	//headless denotes an API call (don't return view, just http responses)
 	var headless = ((!req.body.headless) || (req.body.headless=='true'));
 
 	importer.import(req.file.path, function(err, countTowns){

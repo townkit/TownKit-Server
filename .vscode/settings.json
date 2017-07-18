@@ -7,9 +7,9 @@
                                     // named "node_modules" from 
                                     // the explore tree
 
-            // alternative version
-            "node_modules": true    // this excludes the folder 
+            "node_modules": true,   // this excludes the folder 
                                     // only from the root of
                                     // your workspace 
+            "import-uploads": true
     }
 }
