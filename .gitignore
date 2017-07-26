@@ -2,3 +2,4 @@ node_modules
 import-uploads
 .idea
 *.log
+.vscode
